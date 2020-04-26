@@ -20,4 +20,17 @@
         </plugins>
     </build>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.10.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.toile-libre.libe</groupId>
+            <artifactId>curl</artifactId>
+            <version>LATEST</version>
+        </dependency>
+    </dependencies>
+
 </project>

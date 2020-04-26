@@ -6,66 +6,41 @@ package com.amoraitis.dataretrieval.serializers;
 
 import com.amoraitis.dataretrieval.model.Document;
 
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class InputSerializer {
-    private final static File currentFilePath = new File(InputSerializer.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-    private static String dataFolder = currentFilePath.getParentFile().getParentFile()+ File.separator+"data"+File.separator;
 
-    private List<Document> documents = new ArrayList<Document>();
+    private List<Document> data = new ArrayList<>();
+    private String queries;
 
-    public void loadData(){
+    public InputSerializer(String queries) {
+        this.queries = queries;
+    }
 
-        try {
-            File input = new File(dataFolder + File.separator + "documents.txt");
-            Scanner myReader = new Scanner(input);
+    public void initializeData(List<Document> documents){
+        data = documents;
+    }
 
-            while (myReader.hasNextLine()) {
-                String data = myReader.nextLine();
-                Document currentDoc = new Document();
-                String answer = "";
-                currentDoc.setCode(Integer.parseInt(data.trim()));
-                data = myReader.nextLine();
+    public void serializeJSON() throws IOException {
+        FileWriter queriesFile = new FileWriter(queries, false);
 
-                while(!data.trim().equals("///") && myReader.hasNextLine()){
-                    if(!data.trim().isEmpty()){
-                        answer += data.trim();
-                    }else{
-                        currentDoc.addAnswer(answer);
-                        answer = "";
-                    }
-
-                    try{
-                        data = myReader.nextLine();
-                    }catch(java.util.NoSuchElementException e){
-                        e.printStackTrace();
-                    }
-                }
-
-                currentDoc.addAnswer(answer);
-                this.addDocument(currentDoc);
+        for (int i = 0; i < data.size(); i++) {
+            Document doc = data.get(0);
+            try {
+                String index = String.format("{\"index\":{\"_id\":\"%s\"}}", i + 1);
+                queriesFile.append(index);
+                queriesFile.append(System.lineSeparator());
+                queriesFile.append(doc.toString());
+                queriesFile.append(System.lineSeparator());
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            myReader.close();
-        } catch (FileNotFoundException e) {
-            System.err.println("An error occurred.");
-            e.printStackTrace();
         }
-    }
 
-    public List<Document> getDocuments() {
-        return documents;
-    }
-
-    public void setDocuments(List<Document> documents) {
-        this.documents = documents;
-    }
-
-    public void addDocument(Document document){
-        documents.add(document);
+        queriesFile.flush();
+        queriesFile.close();
     }
 }

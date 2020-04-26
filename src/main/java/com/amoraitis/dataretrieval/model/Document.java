@@ -6,13 +6,14 @@ package com.amoraitis.dataretrieval.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Document {
     private int code;
-    private List answers;
+    private List<String> answers;
 
     public Document() {
-        answers = new ArrayList();
+        answers = new ArrayList<>();
     }
 
     public Document(int code, List<String> answers) {
@@ -28,7 +29,7 @@ public class Document {
         this.code = code;
     }
 
-    public List getAnswers() {
+    private List<String> getAnswers() {
         return answers;
     }
 
@@ -38,5 +39,17 @@ public class Document {
 
     public void addAnswer(String string){
         answers.add(string);
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "{\"tags\":[\"docs\"], \"code\":%s, \"answers\":[%s]}",
+                code,
+                this.getAnswers().parallelStream()
+                        .map(answer -> String.format("{\"answer\": \"%s\"}", answer.replace("\"","\\\"")))
+                        .collect(Collectors.joining(","))
+
+        );
     }
 }
