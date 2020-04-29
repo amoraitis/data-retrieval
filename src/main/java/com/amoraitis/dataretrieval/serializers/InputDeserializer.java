@@ -24,17 +24,12 @@ public class InputDeserializer {
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
                 Document currentDoc = new Document();
-                String answer = "";
+                StringBuilder text = new StringBuilder();
                 currentDoc.setCode(Integer.parseInt(data.trim()));
                 data = myReader.nextLine();
 
                 while(!data.trim().equals("///") && myReader.hasNextLine()){
-                    if(!data.trim().isEmpty()){
-                        answer += data.trim();
-                    }else{
-                        currentDoc.addAnswer(answer);
-                        answer = "";
-                    }
+                    text.append(data.trim());
 
                     try{
                         data = myReader.nextLine();
@@ -43,7 +38,7 @@ public class InputDeserializer {
                     }
                 }
 
-                currentDoc.addAnswer(answer);
+                currentDoc.setText(text.toString());
                 this.addDocument(currentDoc);
             }
 

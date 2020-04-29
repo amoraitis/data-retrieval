@@ -12,6 +12,7 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 **/.idea
 **queries.json
+**.txt
 # java
 # Compiled class file
 *.class

@@ -28,7 +28,7 @@ public class InputSerializer {
         FileWriter queriesFile = new FileWriter(queries, false);
 
         for (int i = 0; i < data.size(); i++) {
-            Document doc = data.get(0);
+            Document doc = data.get(i);
             try {
                 String index = String.format("{\"index\":{\"_id\":\"%s\"}}", i + 1);
                 queriesFile.append(index);
