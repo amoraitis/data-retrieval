@@ -8,9 +8,11 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +32,7 @@ public class QueriesService {
     }
 
     private String getSingleQuery(String queryString, int k) {
-        return "-XGET \"http://localhost:9200/data-retrieval/_search\" -H 'Content-Type: application/json' -d'{\"from\":0, \"size\":" + k + ",\"query\":{\"query_string\":{\"query\":\"" + queryString + "\"}}}'";
+        return "-XGET \"http://localhost:9200/data-retrieval/_search\" -H 'Content-Type: application/json' -d'{\"from\":1, \"size\":" + k + ",\"query\":{\"query_string\":{\"query\":\"" + queryString + "\"}}}'";
     }
 
     private Callable<HttpResponse> executeSingleRequest(String queryString, int k) {
@@ -65,17 +67,21 @@ public class QueriesService {
                 }
             }).collect(Collectors.toList());
 
+        Path pathToTemp = Paths.get(pathToData + "//temp//temp");
+        try {
+            Files.createDirectories(pathToTemp.getParent());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
             // Save off responses
-            // @Warning: Only for reference
+            // @Warning: Only for reference(... and trec-eval)
             executedRequests.forEach(pair ->{
                 try {
                     HttpResponse httpResponse = pair.getValue();
                     String response = EntityUtils.toString(httpResponse.getEntity());
 
-                    Gson gson = new GsonBuilder().create();
-                    JsonObject jsonResponse = gson.fromJson(response, JsonObject.class);
-                    FileWriter writer = new FileWriter(pathToData+ File.pathSeparator +"temp" + File.pathSeparator + pair.getKey() + ".json");
-                    gson.toJson(jsonResponse, writer);
+                    FileWriter writer = new FileWriter(pathToData+ "//temp//" + pair.getKey() + ".json");
+                    writer.write(response);
                     writer.flush();
                     writer.close();
                 } catch (IOException e) {

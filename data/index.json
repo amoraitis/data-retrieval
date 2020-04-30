@@ -2,7 +2,7 @@
   "settings": {
     "similarity": {
       "bm25-inverse-zero": {
-        "type": "BM2S",
+        "type": "BM25",
         "b": 0
       }
     },
@@ -13,16 +13,16 @@
           "stopwords": "_english_"
         },
         "english_keywords": {
-          "type": "keywordjnarker",
+          "type": "keyword_marker",
           "keywords": [
             "example"
           ]
         },
-        "english_stenner": {
+        "english_stemmer": {
           "type": "stemmer",
           "language": "english"
         },
-        "english_possessive_stea«er": {
+        "english_possessive_stemmer": {
           "type": "stemmer",
           "language": "possessive_english"
         }

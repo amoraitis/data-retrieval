@@ -4,18 +4,15 @@
 
 package com.amoraitis.dataretrieval;
 
-import com.amoraitis.dataretrieval.model.Document;
 import com.amoraitis.dataretrieval.serializers.InputDeserializer;
 import com.amoraitis.dataretrieval.serializers.InputSerializer;
 import com.amoraitis.dataretrieval.services.QueriesService;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static org.toilelibre.libe.curl.Curl.curl;
 
@@ -25,7 +22,7 @@ public class Main {
     private static String documentsSource = dataFolder + File.separator + "documents.txt";
     private static String queriesSource = dataFolder + File.separator + "queries.txt";
     private static String queries = dataFolder + File.separator + "queries.json";
-    private static String index = dataFolder + File.separator + "index.json";
+    private static String index = dataFolder + String.valueOf('\\') + "index.json";
 
     public static void main(String[] args) throws IOException, HttpException {
         InputDeserializer documentsDeserializer = new InputDeserializer();
@@ -36,13 +33,14 @@ public class Main {
         serializer.serializeJSON();
 
         // Delete index if exists
-        curl("-XDELETE \"localhost:9200/data-retrieval?pretty\"");
-
+        //HttpResponse deleteResponse = curl("-XDELETE \"http://localhost:9200/data-retrieval?pretty\"");
+        index = index.replace("\\\\", "\\").replace("\\","/");
         // Create index
-        curl("-XPUT \"http://localhost:9200/data-retrieval?pretty\" -H 'Content-Type: application/json' --data-binary @" + index);
+        //HttpResponse createResponse = curl("-XPUT \"http://localhost:9200/data-retrieval?pretty\" -H 'Content-Type: application/json' --data-binary \'@"
+         //       + index + "\'");
 
         // Post docs
-        postDocs();
+        //postDocs();
 
         // Deserialize given queries
         InputDeserializer queriesDeserializer = new InputDeserializer();
@@ -53,8 +51,12 @@ public class Main {
         List<String> responses = queriesService.executeRequests();
     }
 
+    private static String normalizePath(String path){
+        return path.replace("\\\\", "\\").replace("\\","/");
+    }
+
     private static void postDocs() throws HttpException {
-         HttpResponse response = curl("-XPOST \"http://localhost:9200/data-retrieval/doc/_bulk?pretty\" -H 'Content-Type: application/json' --data-binary @" + queries);
+         HttpResponse response = curl("-XPOST \"http://localhost:9200/data-retrieval/_doc/_bulk?pretty\" -H 'Content-Type: application/json' --data-binary \'@" + normalizePath(queries) +"\'");
          int responseCode = response.getStatusLine().getStatusCode();
 
          if(responseCode == 200 || responseCode == 201){

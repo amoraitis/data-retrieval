@@ -29,7 +29,7 @@ public class Document {
     @Override
     public String toString() {
         return String.format(
-                "{\"tags\":[\"docs\"], \"code\":%s, \"text\": %s }",
+                "{\"tags\":[\"docs\"], \"code\":%s, \"text\": \"%s\" }",
                 code,
                 this.getText().replace("\"","\\\""));
     }
