@@ -46,6 +46,31 @@
             <artifactId>httpmime</artifactId>
             <version>4.5.12</version>
         </dependency>
+        <dependency>
+            <groupId>org.lucee</groupId>
+            <artifactId>lucene</artifactId>
+            <version>7.2.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.10</version>
+        </dependency>
+        <dependency>
+            <groupId>uk.ac.gate.plugins</groupId>
+            <artifactId>wordnet</artifactId>
+            <version>8.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.10</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.lucene/analysis -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

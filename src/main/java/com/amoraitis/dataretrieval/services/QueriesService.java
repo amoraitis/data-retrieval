@@ -1,9 +1,6 @@
 package com.amoraitis.dataretrieval.services;
 
 import com.amoraitis.dataretrieval.model.Document;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -14,9 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 import static java.util.AbstractMap.SimpleEntry;
@@ -32,40 +27,27 @@ public class QueriesService {
     }
 
     private String getSingleQuery(String queryString, int k) {
-        return "-XGET \"http://localhost:9200/data-retrieval/_search\" -H 'Content-Type: application/json' -d'{\"from\":1, \"size\":" + k + ",\"query\":{\"query_string\":{\"query\":\"" + queryString + "\"}}}'";
+        return "-XPOST \"http://localhost:9200/data-retrieval/_search\" -H 'Content-Type: application/json' -d'{\"from\":1,\"size\":" + k + ",\"query\":{\"query_string\":{\"query\":\"" + queryString + "\"}}}'";
     }
 
     private Callable<HttpResponse> executeSingleRequest(String queryString, int k) {
         return () -> curl(getSingleQuery(queryString, k));
     }
 
-    public List<String> executeRequests() {
+    public Map<String, String> executeRequests() {
+        Map<String, String> result = new HashMap<>();
         Map<String, Callable<HttpResponse>> requests = new HashMap<>();
-        Arrays.asList(20,30,50).forEach( k ->
+        Arrays.asList(20, 30, 50).forEach( k ->
                 queries.forEach(doc ->
                         requests.put(String.format("q%d_k%d", doc.getCode(), k), executeSingleRequest(doc.getText(), k)))
         );
 
         ExecutorService queriesService = Executors.newWorkStealingPool(Runtime.getRuntime().availableProcessors());
 
-            List<AbstractMap.Entry<String, HttpResponse>> executedRequests = requests.entrySet().stream().map((pair) -> {
-                queriesService.submit(pair.getValue());
+        List<AbstractMap.Entry<String, Future<HttpResponse>>> executedRequests = requests.entrySet().stream()
+                .map((pair) -> new SimpleEntry<>(pair.getKey(), queriesService.submit(pair.getValue()))).collect(Collectors.toList());
 
-                try {
-                    HttpResponse response = pair.getValue().call();
-
-                    if (response.getStatusLine().getStatusCode() != 200) {
-                        throw new HttpException("Couldn't get query...");
-                    } else {
-                        return new SimpleEntry<>(pair.getKey(), response);
-                    }
-                } catch (HttpException httpEx) {
-                    System.err.println(httpEx.getMessage());
-                    throw new IllegalStateException(httpEx.getMessage());
-                } catch (Exception e) {
-                    throw new IllegalStateException(e);
-                }
-            }).collect(Collectors.toList());
+        queriesService.shutdown();
 
         Path pathToTemp = Paths.get(pathToData + "//temp//temp");
         try {
@@ -73,23 +55,36 @@ public class QueriesService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-            // Save off responses
-            // @Warning: Only for reference(... and trec-eval)
-            executedRequests.forEach(pair ->{
-                try {
-                    HttpResponse httpResponse = pair.getValue();
-                    String response = EntityUtils.toString(httpResponse.getEntity());
 
-                    FileWriter writer = new FileWriter(pathToData+ "//temp//" + pair.getKey() + ".json");
-                    writer.write(response);
-                    writer.flush();
-                    writer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
+        // Save off responses
+        // @Warning: Only for reference(... and trec-eval)
+        executedRequests.forEach(pair ->{
+            try {
+                HttpResponse httpResponse = pair.getValue().get();
+
+                if (httpResponse.getStatusLine().getStatusCode() != 200) {
+                    throw new HttpException("Couldn't get query...");
                 }
-            });
 
-            return executedRequests.stream().map(Map.Entry::getKey).collect(Collectors.toList());
+                String response = EntityUtils.toString(httpResponse.getEntity());
+                result.put(pair.getKey(), response);
+
+                FileWriter writer = new FileWriter(pathToData+ "//temp//" + pair.getKey() + ".json");
+                writer.write(response);
+                writer.flush();
+                writer.close();
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
+            } catch (HttpException httpEx) {
+                httpEx.printStackTrace();
+                System.err.println(httpEx.getMessage());
+                throw new IllegalStateException(httpEx.getMessage());
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            }
+        });
+
+        return result;
     }
 }
 
